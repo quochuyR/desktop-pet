@@ -29,26 +29,75 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
       - name: install frontend dependencies
         run: npm install
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: Build Tauri app
+        id: tauri-build
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
-          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
+          tagName: app-v__VERSION__
           releaseName: 'Desktop Pet v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
-          includeUpdaterJson: true
-          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
+
+      - name: Generate and upload latest.json
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          $tagName = "app-v$version"
+          $exeFile = Get-ChildItem "src-tauri/target/release/bundle/nsis" -Filter "*.exe" | Select-Object -First 1
+          $sigFile = Get-ChildItem "src-tauri/target/release/bundle/nsis" -Filter "*.sig" | Select-Object -First 1
+
+          if (-not $exeFile -or -not $sigFile) {
+            Write-Error "Could not find .exe or .sig file in nsis bundle directory"
+            exit 1
+          }
+
+          $signature = Get-Content $sigFile.FullName -Raw
+
+          # Get release info to find the actual release id
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/$tagName" `
+            -Headers @{ Authorization = "Bearer $env:GITHUB_TOKEN"; Accept = "application/vnd.github+json" }
+
+          $downloadUrl = "https://github.com/${{ github.repository }}/releases/download/$tagName/$($exeFile.Name)"
+
+          $latestJson = @{
+            version = $version
+            notes = "Desktop Pet v$version"
+            pub_date = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{
+              "windows-x86_64" = @{
+                signature = $signature.Trim()
+                url = $downloadUrl
+              }
+            }
+          } | ConvertTo-Json -Depth 5
+
+          $latestJsonPath = "latest.json"
+          Set-Content -Path $latestJsonPath -Value $latestJson -Encoding UTF8
+
+          Write-Host "Generated latest.json:"
+          Get-Content $latestJsonPath
+
+          # Upload to release
+          $uploadUrl = $release.upload_url -replace '\{.*\}', ''
+          $uploadUrl = "$uploadUrl`?name=latest.json&label=latest.json"
+
+          Invoke-RestMethod -Uri $uploadUrl `
+            -Method Post `
+            -Headers @{
+              Authorization = "Bearer $env:GITHUB_TOKEN"
+              "Content-Type" = "application/json"
+            } `
+            -InFile $latestJsonPath
+
+          Write-Host "Successfully uploaded latest.json to release $tagName"
