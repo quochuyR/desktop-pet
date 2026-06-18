@@ -33,7 +33,7 @@
       }
     } catch (e: any) {
       console.error(e);
-      updateMessage.set('Failed to check for updates.');
+      updateMessage.set(`Error: ${e}`);
     } finally {
       isCheckingUpdate.set(false);
     }

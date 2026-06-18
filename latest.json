@@ -1,0 +1,11 @@
+{
+  "version": "0.1.6",
+  "notes": "Desktop Pet v0.1.6",
+  "pub_date": "2026-06-18T10:22:04.363Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcExKZnI5VkZ4a25RbDZGWnE2T25TMWdYNlFlNWdNWURrYXE2MlhaL1NrRUZ0U2krQ1lrMVlicm43WGpHQThpNWcvbGRjZS9TalFVOXdDN2thSHc2V1d0NDNjdElpOGdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgxNzc2OTY2CWZpbGU6RGVza3RvcCBQZXQg8J+Qol8wLjEuNl94NjQtc2V0dXAuZXhlClZrT3JEV3VPYno0OXJYcjEwNTFqZ2gwZDlKV3JERGdzallqVkxWVmczaThHYkV5TXcwdTRSb3p1ZVJDY2lTVFNPN245OWdyUm5ablZaM0hoNTZCaUR3PT0K",
+      "url": "https://github.com/quochuyR/desktop-pet/releases/download/app-v0.1.6/Desktop.Pet._0.1.6_x64-setup.exe"
+    }
+  }
+}

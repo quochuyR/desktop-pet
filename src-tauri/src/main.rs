@@ -30,9 +30,7 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
         .setup(move |app| {
-            // Only register the updater in release builds — suppresses the
-            // "update endpoint did not respond" error noise during development.
-            #[cfg(not(debug_assertions))]
+            // Register updater plugin in all builds so the UI works correctly
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
 
             // ── Initialize state ────────────────────────────────────
