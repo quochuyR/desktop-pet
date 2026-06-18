@@ -11,6 +11,7 @@
   import StatsHUD from './lib/components/StatsHUD.svelte';
   import DecorateHUD from './lib/components/DecorateHUD.svelte';
   import BreakOverlay from './lib/components/BreakOverlay.svelte';
+  import UpdateDialog from './lib/components/UpdateDialog.svelte';
 
   const appWindow = getCurrentWindow();
 
@@ -497,6 +498,11 @@
       }
     });
 
+    listen('show_update', () => {
+      jsLog("[App.svelte] show_update event received");
+      state.updateVisible = true;
+    });
+
     listen('trigger-break', () => {
       if (state.isDragging) {
         state.isDragging = false;
@@ -583,6 +589,7 @@
   <div class="relative z-10">
     <StatsHUD />
     <DecorateHUD />
+    <UpdateDialog />
   </div>
 
   <BreakOverlay />

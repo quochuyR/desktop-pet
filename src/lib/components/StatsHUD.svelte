@@ -3,7 +3,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { writable } from 'svelte/store';
   import { onMount } from 'svelte';
-
+  
   import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 
   const activeTab = writable<'rpg' | 'apps' | 'settings'>('rpg');

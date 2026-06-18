@@ -24,6 +24,8 @@ fn main() {
     }
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
@@ -56,12 +58,21 @@ fn main() {
             let stats_item = MenuItem::with_id(app, "stats", "Stats 📊", true, None::<&str>)?;
             let decorate_item =
                 MenuItem::with_id(app, "decorate", "Decorate Pet 🎨", true, None::<&str>)?;
+            let update_item =
+                MenuItem::with_id(app, "update", "Check Updates 🚀", true, None::<&str>)?;
             let sep = PredefinedMenuItem::separator(app)?;
             let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
             let menu = Menu::with_items(
                 app,
-                &[&show_item, &stats_item, &decorate_item, &sep, &quit_item],
+                &[
+                    &show_item,
+                    &stats_item,
+                    &decorate_item,
+                    &update_item,
+                    &sep,
+                    &quit_item,
+                ],
             )?;
 
             let _tray = TrayIconBuilder::new()
@@ -88,6 +99,9 @@ fn main() {
                     }
                     "decorate" => {
                         let _ = app.emit("show_decorate", ());
+                    }
+                    "update" => {
+                        let _ = app.emit("show_update", ());
                     }
                     _ => {}
                 })
