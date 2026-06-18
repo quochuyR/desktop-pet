@@ -217,7 +217,7 @@
               <span style="color: #b2bec3; font-size: 11px;">Automatically launch Desktop Pet when Windows starts</span>
             </div>
             
-            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 20px;">
+            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0;">
               <input type="checkbox" checked={$autostartEnabled} onchange={toggleAutostart} style="opacity: 0; width: 0; height: 0;">
               <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {$autostartEnabled ? '#a29bfe' : 'rgba(255,255,255,0.2)'}; transition: .4s; border-radius: 20px;">
                 <span class="slider-dot" style="position: absolute; content: ''; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; transform: translateX({$autostartEnabled ? '20px' : '0'});"></span>
