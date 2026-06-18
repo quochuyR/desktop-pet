@@ -32,6 +32,7 @@ export class GlobalState {
   codingMinutes = $state(0);
   statsVisible = $state(false);
   decorateVisible = $state(false);
+  updateVisible = $state(false);
   isDragging = $state(false);
   isHoveringPet = $state(false);
   speechTimeout: any = null;
