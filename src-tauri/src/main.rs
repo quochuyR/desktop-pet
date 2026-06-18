@@ -81,9 +81,15 @@ fn main() {
                 ],
             )?;
 
-            let _tray = TrayIconBuilder::new()
+            let mut tray_builder = TrayIconBuilder::new()
                 .menu(&menu)
-                .tooltip("🐢 Desktop Pet")
+                .tooltip("🐢 Desktop Pet");
+
+            if let Some(icon) = app.default_window_icon().cloned() {
+                tray_builder = tray_builder.icon(icon);
+            }
+
+            let _tray = tray_builder
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => {
                         if let Some(state) = app.try_state::<AppState>() {
