@@ -83,7 +83,7 @@ jobs:
           } | ConvertTo-Json -Depth 5
 
           $latestJsonPath = "latest.json"
-          Set-Content -Path $latestJsonPath -Value $latestJson -Encoding UTF8
+          [System.IO.File]::WriteAllText($latestJsonPath, $latestJson, (New-Object System.Text.UTF8Encoding($False)))
 
           Write-Host "Generated latest.json:"
           Get-Content $latestJsonPath
