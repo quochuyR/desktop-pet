@@ -1,0 +1,7 @@
+# Desktop Pet — .gitignore
+config.toml
+target/
+node_modules/
+dist/
+.env
+*.log
