@@ -23,20 +23,18 @@ fn main() {
         log::info!("Gemini AI: no key found, using offline messages");
     }
 
-    let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_process::init());
-
-    // Only register the updater in release builds — suppresses the
-    // "update endpoint did not respond" error noise during development.
-    #[cfg(not(debug_assertions))]
-    let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
-
-    builder
+    tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
         .setup(move |app| {
+            // Only register the updater in release builds — suppresses the
+            // "update endpoint did not respond" error noise during development.
+            #[cfg(not(debug_assertions))]
+            app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+
             // ── Initialize state ────────────────────────────────────
             let db = db::Database::new().expect("Failed to init database");
             let pet = db.load_pet().unwrap_or_default();
@@ -83,7 +81,8 @@ fn main() {
 
             let mut tray_builder = TrayIconBuilder::new()
                 .menu(&menu)
-                .tooltip("🐢 Desktop Pet");
+                .tooltip("🐢 Desktop Pet")
+                .show_menu_on_left_click(false);
 
             if let Some(icon) = app.default_window_icon().cloned() {
                 tray_builder = tray_builder.icon(icon);
@@ -126,14 +125,9 @@ fn main() {
                     {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
-                            let visible = window.is_visible().unwrap_or(false);
-                            if visible {
-                                let _ = window.hide();
-                                let _ = window.emit("window-visibility", false);
-                            } else {
-                                let _ = window.show();
-                                let _ = window.emit("window-visibility", true);
-                            }
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                            let _ = window.emit("window-visibility", true);
                         }
                     }
                 })
