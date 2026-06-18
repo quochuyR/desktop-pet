@@ -246,32 +246,47 @@ export function updateMovement() {
     const centerX = petState.monitorX + (petState.screenW - W) / 2;
     const centerY = petState.monitorY + (petState.screenH - H) / 2;
     
-    // Jump window to center immediately to avoid OS window moving lag
-    petState.globalX = centerX;
-    petState.globalY = centerY;
-    // Don't interpolate the window teleport
-    petState.prevGlobalX = centerX;
-    petState.prevGlobalY = centerY;
-    
-    if (petState.actionTimer < 90) {
-      const t = petState.actionTimer / 90;
+    if (petState.actionTimer < 150) {
+      const t = petState.actionTimer / 150;
       const easeT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       
-      // Calculate where the turtle was relative to the new window position
-      const startX = (petState as any).statsStartX - centerX + 200;
-      const startY = (petState as any).statsStartY - centerY + 200;
+      const startX = (petState as any).statsStartX;
+      const startY = (petState as any).statsStartY;
       
-      // Animate from start position to 200, 200 (center of canvas)
-      petState.x = startX + (200 - startX) * easeT;
-      petState.y = startY + (200 - startY) * easeT;
+      const dx = startX - centerX;
+      const dy = startY - centerY;
+      const R = Math.sqrt(dx * dx + dy * dy);
+      const theta0 = Math.atan2(dy, dx);
       
-      petState.rotation = t * Math.PI * 8;
+      // Spiral flight path: radius shrinks from R to 0, angle sweeps 1 loop
+      const r = R * (1 - easeT);
+      const theta = theta0 + easeT * Math.PI * 2;
+      petState.globalX = centerX + r * Math.cos(theta);
+      petState.globalY = centerY + r * Math.sin(theta);
+      petState.x = 200;
+      petState.y = 200;
+      
+      // Flying saucer spin: disc appears flattened (squash), horizontal width oscillates (stretch=cos)
+      const spinDir = dx >= 0 ? 1 : -1;
+      const angle = t * Math.PI * 6 * spinDir; // 3 full rotations in 2.5s
+      petState.rotation = Math.sin(angle * 0.5) * 0.18; // subtle wobble for realism
+      petState.stretch = Math.cos(angle);     // horizontal spin (disc width)
+      petState.squash = 0.42;                 // always flat = disc shape from above
       petState.mood = 'shell_retreat';
     } else {
+      petState.globalX = centerX;
+      petState.globalY = centerY;
       petState.x = 200;
       petState.y = 200;
       petState.rotation = 0;
+      petState.stretch = 1.0;
+      petState.squash = 1.0;
       petState.mood = 'happy'; 
+      
+      if (state.pendingDialog === 'stats') state.statsVisible = true;
+      else if (state.pendingDialog === 'decorate') state.decorateVisible = true;
+      else if (state.pendingDialog === 'update') state.updateVisible = true;
+      state.pendingDialog = null;
     }
     return;
   }
@@ -284,26 +299,36 @@ export function updateMovement() {
     const centerX = petState.monitorX + (petState.screenW - W) / 2;
     const centerY = petState.monitorY + (petState.screenH - H) / 2;
     
-    // Keep window at center during the exit animation
-    petState.globalX = centerX;
-    petState.globalY = centerY;
-    
-    if (petState.actionTimer < 90) {
-      const t = petState.actionTimer / 90;
+    if (petState.actionTimer < 150) {
+      const t = petState.actionTimer / 150;
       const easeT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       
-      // Calculate where the turtle needs to go relative to the window
-      const endX = (petState as any).statsOrigX - centerX + 200;
-      const endY = (petState as any).statsOrigY - centerY + 200;
+      const endX = (petState as any).statsOrigX;
+      const endY = (petState as any).statsOrigY;
       
-      // Animate from 200, 200 to end position
-      petState.x = 200 + (endX - 200) * easeT;
-      petState.y = 200 + (endY - 200) * easeT;
+      const dx = endX - centerX;
+      const dy = endY - centerY;
+      const R = Math.sqrt(dx * dx + dy * dy);
+      const theta0 = Math.atan2(dy, dx);
       
-      petState.rotation = (1 - t) * Math.PI * 8;
+      // Radius grows from 0 to R, angle unwinds 1 time
+      const r = R * easeT;
+      const theta = theta0 - (1 - easeT) * Math.PI * 2;
+      
+      petState.globalX = centerX + r * Math.cos(theta);
+      petState.globalY = centerY + r * Math.sin(theta);
+      
+      petState.x = 200;
+      petState.y = 200;
+      
+      // Flying saucer spin reverse on exit
+      const spinDir = dx >= 0 ? 1 : -1;
+      const angle = (1 - t) * Math.PI * 6 * spinDir;
+      petState.rotation = Math.sin(angle * 0.5) * 0.18;
+      petState.stretch = Math.cos(angle);
+      petState.squash = 0.42;
       petState.mood = 'shell_retreat';
     } else {
-      // Jump window back to original position
       petState.globalX = (petState as any).statsOrigX;
       petState.globalY = (petState as any).statsOrigY;
       // Don't interpolate the window teleport
@@ -328,28 +353,39 @@ export function updateMovement() {
     const centerX = petState.monitorX + (petState.screenW - W) / 2;
     const centerY = petState.monitorY + (petState.screenH - H) / 2;
     
-    // Jump window to center immediately to avoid OS window moving lag
-    petState.globalX = centerX;
-    petState.globalY = centerY;
-    // Don't interpolate the window teleport
-    petState.prevGlobalX = centerX;
-    petState.prevGlobalY = centerY;
-    
-    if (petState.actionTimer < 90) {
-      const t = petState.actionTimer / 90;
+    if (petState.actionTimer < 150) {
+      const t = petState.actionTimer / 150;
       const easeT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       
-      // Calculate where the turtle was relative to the new window position
-      const startX = petState.breakStartX - centerX + 200;
-      const startY = petState.breakStartY - centerY + 200;
+      const startX = petState.breakStartX;
+      const startY = petState.breakStartY;
       
-      // Animate from start position to 200, 200 (center of canvas)
-      petState.x = startX + (200 - startX) * easeT;
-      petState.y = startY + (200 - startY) * easeT;
+      const dx = startX - centerX;
+      const dy = startY - centerY;
+      const R = Math.sqrt(dx * dx + dy * dy);
+      const theta0 = Math.atan2(dy, dx);
       
-      petState.rotation = t * Math.PI * 8;
+      // Radius shrinks from R to 0, angle spins 1 time
+      const r = R * (1 - easeT);
+      const theta = theta0 + easeT * Math.PI * 2;
+      
+      petState.globalX = centerX + r * Math.cos(theta);
+      petState.globalY = centerY + r * Math.sin(theta);
+      
+      petState.x = 200;
+      petState.y = 200;
+      
+      // Flying saucer spin for break
+      const spinDir = dx >= 0 ? 1 : -1;
+      const angle = t * Math.PI * 6 * spinDir;
+      petState.rotation = Math.sin(angle * 0.5) * 0.18;
+      petState.stretch = Math.cos(angle);
+      petState.squash = 0.42;
       petState.mood = 'shell_retreat';
+      state.breakVisible = false;
     } else {
+      petState.globalX = centerX;
+      petState.globalY = centerY;
       petState.x = 200;
       petState.y = 200;
       petState.rotation = 0;
@@ -378,26 +414,36 @@ export function updateMovement() {
     const centerX = petState.monitorX + (petState.screenW - W) / 2;
     const centerY = petState.monitorY + (petState.screenH - H) / 2;
     
-    // Keep window at center during the exit animation
-    petState.globalX = centerX;
-    petState.globalY = centerY;
-    
-    if (petState.actionTimer < 90) {
-      const t = petState.actionTimer / 90;
+    if (petState.actionTimer < 150) {
+      const t = petState.actionTimer / 150;
       const easeT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       
-      // Calculate where the turtle needs to go relative to the window
-      const endX = petState.breakOrigX - centerX + 200;
-      const endY = petState.breakOrigY - centerY + 200;
+      const endX = petState.breakOrigX;
+      const endY = petState.breakOrigY;
       
-      // Animate from 200, 200 to end position
-      petState.x = 200 + (endX - 200) * easeT;
-      petState.y = 200 + (endY - 200) * easeT;
+      const dx = endX - centerX;
+      const dy = endY - centerY;
+      const R = Math.sqrt(dx * dx + dy * dy);
+      const theta0 = Math.atan2(dy, dx);
       
-      petState.rotation = (1 - t) * Math.PI * 8;
+      // Radius grows from 0 to R, angle unwinds 1 time
+      const r = R * easeT;
+      const theta = theta0 - (1 - easeT) * Math.PI * 2;
+      
+      petState.globalX = centerX + r * Math.cos(theta);
+      petState.globalY = centerY + r * Math.sin(theta);
+      
+      petState.x = 200;
+      petState.y = 200;
+      
+      // Flying saucer spin reverse for break exit
+      const spinDir = dx >= 0 ? 1 : -1;
+      const angle = (1 - t) * Math.PI * 6 * spinDir;
+      petState.rotation = Math.sin(angle * 0.5) * 0.18;
+      petState.stretch = Math.cos(angle);
+      petState.squash = 0.42;
       petState.mood = 'shell_retreat';
     } else {
-      // Jump window back to original position
       petState.globalX = petState.breakOrigX;
       petState.globalY = petState.breakOrigY;
       // Don't interpolate the window teleport
@@ -769,6 +815,9 @@ export function updateMovement() {
     petState.vy += petState.gravity;
     if (petState.vy > 35) petState.vy = 35;
     
+    // Track maximum fall velocity to determine impact severity
+    (petState as any).fallMaxVy = Math.max((petState as any).fallMaxVy || 0, Math.abs(petState.vy));
+    
     petState.globalY += petState.vy;
     petState.globalX += petState.vx;
     
@@ -891,10 +940,10 @@ export function updateMovement() {
         petState.squash = Math.max(0.5, 1.0 - (impact * 0.03));
         petState.stretch = Math.min(1.35, 1.0 + (impact * 0.022));
         
-        if (impact > 6) {
+        if (impact > 15) {
            for(let i=0; i<5; i++) particleSystem.addDust(petState.x, petState.y + 20);
         }
-        if (impact > 12) {
+        if (impact > 28) { // ~280px fall before landing flipped (gravity=1.2, v=sqrt(2*1.2*280)≈26)
            for(let i=0; i<5; i++) particleSystem.addStar(petState.x, petState.y, (Math.random()-0.5)*12, -6 - Math.random()*6);
            (petState as any).forceFlip = true;
            petState.rotation = Math.PI; 
@@ -931,6 +980,10 @@ export function updateMovement() {
           petState.stretch = 1.1;
         } else {
           petState.rotation = 0;
+          
+          const maxVy = (petState as any).fallMaxVy || 0;
+          (petState as any).fallMaxVy = 0; // reset for next fall
+          
           if (petState.mood === 'crying') {
             petState.currentAction = 'crying_ground';
             petState.actionTimer = 0;
@@ -942,7 +995,7 @@ export function updateMovement() {
               'Té đau điếng cả mai rùa rồi! Huhu! 🤕💦'
             ];
             showSpeech(crySpeeches[Math.floor(Math.random() * crySpeeches.length)], 3000);
-          } else if (petState.actionTimer > 10) {
+          } else if (maxVy > 28) { // ~280px free fall needed before getting tired
             petState.currentAction = 'tired';
             petState.mood = 'tired';
             petState.actionTimer = 0;

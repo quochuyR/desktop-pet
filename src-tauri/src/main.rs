@@ -23,9 +23,15 @@ fn main() {
         log::info!("Gemini AI: no key found, using offline messages");
     }
 
-    tauri::Builder::default()
-        .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_process::init());
+
+    // Only register the updater in release builds — suppresses the
+    // "update endpoint did not respond" error noise during development.
+    #[cfg(not(debug_assertions))]
+    let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+
+    builder
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())

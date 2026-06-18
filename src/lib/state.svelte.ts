@@ -46,7 +46,8 @@ export class GlobalState {
   speechVisible = $state(false);
   thinkingVisible = $state(false);
 
-  // Break overlay
+  // Dialog queues
+  pendingDialog = $state<string | null>(null);
   breakVisible = $state(false);
   breakTimer = $state(30.0);
   

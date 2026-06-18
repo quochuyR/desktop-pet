@@ -40,8 +40,8 @@
     (petState as any).statsStartX = petState.globalX;
     (petState as any).statsStartY = petState.globalY;
 
-    // Hand off to physics — it will move the window and spin the turtle
-    state.statsVisible = true;
+    // Hand off to physics — it will move the OS window and spin the turtle
+    state.pendingDialog = 'stats';
     petState.currentAction = 'stats_dialog';
     petState.actionTimer = 0;
     jsLog("[openStats] Success: statsVisible=true, currentAction=stats_dialog");
@@ -81,8 +81,8 @@
     (petState as any).statsStartX = petState.globalX;
     (petState as any).statsStartY = petState.globalY;
 
-    // Hand off to physics — it will move the window and spin the turtle
-    state.decorateVisible = true;
+    // Hand off to physics — it will move the OS window and spin the turtle
+    state.pendingDialog = 'decorate';
     petState.currentAction = 'stats_dialog';
     petState.actionTimer = 0;
     jsLog("[openDecorate] Success: decorateVisible=true, currentAction=stats_dialog");
@@ -95,6 +95,37 @@
     petState.currentAction = 'stats_dialog_exit';
     petState.actionTimer = 0;
     jsLog("[closeDecorate] Success: decorateVisible=false, currentAction=stats_dialog_exit");
+  }
+
+  function openUpdate() {
+    jsLog("[openUpdate] Triggered");
+    if (state.breakVisible || petState.currentAction === 'hourly_break') {
+      return;
+    }
+    if (state.isDragging) {
+      state.isDragging = false;
+      state.speechVisible = false;
+      velHistory = [];
+      (petState as any).lastDragPhysX = undefined;
+      (petState as any).lastDragPhysY = undefined;
+    }
+    if (state.statsVisible) state.statsVisible = false;
+    if (state.decorateVisible) state.decorateVisible = false;
+
+    (petState as any).statsOrigX = petState.globalX;
+    (petState as any).statsOrigY = petState.globalY;
+    (petState as any).statsStartX = petState.globalX;
+    (petState as any).statsStartY = petState.globalY;
+
+    state.pendingDialog = 'update';
+    petState.currentAction = 'stats_dialog';
+    petState.actionTimer = 0;
+  }
+
+  function closeUpdate() {
+    state.updateVisible = false;
+    petState.currentAction = 'stats_dialog_exit';
+    petState.actionTimer = 0;
   }
 
   function showSpeech(text: string, durationMs: number = 3000) {
@@ -378,7 +409,7 @@
           petState.vy = vy;
 
           const throwSpeed = Math.sqrt(vx * vx + vy * vy);
-          if (throwSpeed > 3.0) {
+          if (throwSpeed > 15.0) { // Require a fast fling (15 px/frame = 900 px/sec) to trigger "thrown" state
             (petState as any).isThrown = true;
             let spinDirection = Math.sign(vx);
             if (spinDirection === 0) spinDirection = Math.random() > 0.5 ? 1 : -1;
@@ -500,7 +531,11 @@
 
     listen('show_update', () => {
       jsLog("[App.svelte] show_update event received");
-      state.updateVisible = true;
+      if (state.updateVisible) {
+        closeUpdate();
+      } else {
+        openUpdate();
+      }
     });
 
     listen('trigger-break', () => {
@@ -524,7 +559,7 @@
     let unlistenPlatforms: any;
     listen('window_platforms_update', (event: any) => {
       // During drag or break overlay, clear platforms entirely so physics won't prematurely land the turtle
-      if (state.isDragging || state.breakVisible || petState.currentAction === 'hourly_break' || petState.currentAction === 'hourly_break_exit' || state.statsVisible || state.decorateVisible || petState.currentAction === 'stats_dialog' || petState.currentAction === 'stats_dialog_exit') {
+      if (state.isDragging || state.breakVisible || petState.currentAction === 'hourly_break' || petState.currentAction === 'hourly_break_exit' || state.statsVisible || state.decorateVisible || state.updateVisible || petState.currentAction === 'stats_dialog' || petState.currentAction === 'stats_dialog_exit') {
         state.platforms = [];
         return;
       }
@@ -582,7 +617,7 @@
   class="w-screen h-screen overflow-hidden relative select-none"
   style:cursor={state.isDragging ? 'grabbing' : (state.isHoveringPet ? 'grab' : 'default')}
 >
-  <div class="absolute inset-0 z-0">
+  <div class="absolute inset-0 z-0 pointer-events-none">
     <PetCanvas />
   </div>
 
