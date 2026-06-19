@@ -14,57 +14,6 @@ export function executeLegacyBehaviors(bounds: any, currentGroundY: number, targ
     state.showSpeech(msg, 3000);
   };
   
-if (state.isDragging) {
-    // Dangling logic
-    petState.currentAction = 'dangling';
-    petState.mood = 'scared';
-    
-    // Calculate drag velocity from position change in physical space
-    const active = state.monitors.find(m => {
-      const s = m.scale_factor || 1.0;
-      return Math.round(m.x / s) === petState.monitorX && Math.round(m.y / s) === petState.monitorY;
-    }) || state.monitors[0];
-    const scale = active ? (active.scale_factor || 1.0) : 1.0;
-
-    const currentPhysX = petState.globalX * scale;
-    const currentPhysY = petState.globalY * scale;
-
-    const lastDragPhysX = (petState as any).lastDragPhysX !== undefined ? (petState as any).lastDragPhysX : currentPhysX;
-    const lastDragPhysY = (petState as any).lastDragPhysY !== undefined ? (petState as any).lastDragPhysY : currentPhysY;
-    
-    const dragVxPhys = currentPhysX - lastDragPhysX;
-    const dragVyPhys = currentPhysY - lastDragPhysY;
-    
-    (petState as any).lastDragPhysX = currentPhysX;
-    (petState as any).lastDragPhysY = currentPhysY;
-
-    // Convert smooth physical velocity to logical velocity for the sway/squash logic
-    const dragVx = dragVxPhys / scale;
-    const dragVy = dragVyPhys / scale;
-    
-    // Sway rotation based on horizontal drag velocity
-    const targetRot = Math.max(-0.6, Math.min(0.6, -dragVx * 0.04));
-    petState.rotation += (targetRot - petState.rotation) * 0.12;
-    
-    // Squash/stretch based on drag speed: stretch vertically (taller/thinner) when dragged
-    const dragSpeed = Math.sqrt(dragVx * dragVx + dragVy * dragVy);
-    if (dragSpeed > 1) {
-      const amount = Math.min(0.12, dragSpeed * 0.006);
-      const targetStretch = 1.0 - amount; // thinner horizontally
-      const targetSquash = 1.0 + amount;  // taller vertically
-      petState.stretch += (targetStretch - petState.stretch) * 0.2;
-      petState.squash += (targetSquash - petState.squash) * 0.2;
-    } else {
-      petState.stretch += (1.0 - petState.stretch) * 0.15;
-      petState.squash += (1.0 - petState.squash) * 0.15;
-    }
-    
-    petState.vx = 0;
-    petState.vy = 0;
-    petState.angularVelocity = 0;
-    return;
-  }
-
   if (petState.currentAction === 'celebrate_fireworks') {
     petState.vx = 0;
     petState.vy = 0;
@@ -81,70 +30,6 @@ if (state.isDragging) {
       state.speechVisible = true;
     }
     return;
-  }
-
-  petState.squash += (1.0 - petState.squash) * 0.15;
-  petState.stretch += (1.0 - petState.stretch) * 0.15;
-
-  const canFall = 
-    petState.currentAction !== 'falling' && 
-    petState.currentAction !== 'dangling' && 
-    petState.currentAction !== 'flipped' && 
-    !petState.currentAction.startsWith('climbing') && 
-    !petState.currentAction.startsWith('prepare_') && 
-    petState.currentAction !== 'hourly_break' && 
-    petState.currentAction !== 'hourly_break_exit' &&
-    petState.currentAction !== 'stats_dialog' && 
-    petState.currentAction !== 'stats_dialog_exit' &&
-    petState.currentAction !== 'portal';
-
-  const onPlatform = currentGroundY < groundY;
-
-  if (canFall && petState.globalY < currentGroundY - 2) {
-    if (petState.wasOnPlatform) {
-      // Platform disappeared or walked off: delay falling (Coyote Time)
-      petState.platformLostTimer++;
-      if (petState.platformLostTimer > 12) { // 200ms at 60fps
-        if (petState.currentAction === 'sleep') {
-          state.speechVisible = false;
-        }
-        petState.currentAction = 'falling';
-        petState.vy = 0;
-        petState.wasOnPlatform = false;
-        petState.platformLostTimer = 0;
-      }
-    } else {
-      // Fall immediately (no previous platform or already in air)
-      if (petState.currentAction === 'sleep') {
-        state.speechVisible = false;
-      }
-      petState.currentAction = 'falling';
-      petState.vy = 0;
-    }
-  } else {
-    // Reset timer when grounded
-    petState.platformLostTimer = 0;
-    
-    // Force snap to ground to avoid floating point precision issues over time
-    if (onPlatform && Math.abs(petState.globalY - currentGroundY) < 5) {
-      petState.globalY = currentGroundY;
-    }
-  }
-
-  petState.wasOnPlatform = onPlatform;
-  if (onPlatform && targetPlatform) {
-    petState.activePlatformId = targetPlatform.id;
-    petState.prevPlatformState = { ...targetPlatform };
-  } else {
-    petState.activePlatformId = null;
-    petState.prevPlatformState = null;
-  }
-
-  if (petState.currentAction !== 'falling' && petState.currentAction !== 'dangling' && petState.currentAction !== 'flipped' && !petState.currentAction.startsWith('climbing') && !petState.currentAction.startsWith('prepare_') && petState.currentAction !== 'hourly_break' && petState.currentAction !== 'hourly_break_exit' && petState.currentAction !== 'stats_dialog' && petState.currentAction !== 'stats_dialog_exit') {
-     if (Math.abs(petState.rotation) > 0.01) {
-       let targetRot = Math.round(petState.rotation / (Math.PI * 2)) * (Math.PI * 2);
-       petState.rotation += (targetRot - petState.rotation) * 0.15;
-     }
   }
 
   if (petState.currentAction === 'stats_dialog') {
