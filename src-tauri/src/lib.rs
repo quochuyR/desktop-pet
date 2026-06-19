@@ -2,6 +2,7 @@
 
 pub mod ai_advisor;
 pub mod commands;
+pub mod sys;
 pub mod config;
 pub mod db;
 pub mod dev_monitor;

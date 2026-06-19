@@ -1,0 +1,5 @@
+echo "🛡️ AI Defense Layer: Running strict checks..."
+npx svelte-check
+npm run test
+npx lint-staged
+echo "✅ All checks passed! Committing..."

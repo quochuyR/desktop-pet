@@ -1,5 +1,5 @@
 import { petState, state } from '../state.svelte';
-import { particleSystem } from '../physics';
+import { particleSystem } from '../particleSystem';
 
 export interface AgentAction {
   name: string;
@@ -17,16 +17,10 @@ export const ACTIONS: AgentAction[] = [
     effects: { 'currentAction:wander': true },
     getCost() { return 2; },
     execute() {
-      petState.currentAction = 'wander';
-      petState.mood = 'walking';
-      petState.vx = (Math.random() > 0.5 ? 1 : -1) * (0.8 + Math.random() * 0.5);
-      petState.actionTimer = 0;
+      petState.setAction('wander', 'walking', (Math.random() > 0.5 ? 1 : -1) * (0.8 + Math.random() * 0.5));
       
       const wanderSpeeches = ['Đi tuần tra màn hình thôi! 👮🐢', 'Xem có bug nào quanh đây không... 🤔', 'Nao nao đi dạo nào! 🚶‍♂️'];
-      state.speechText = wanderSpeeches[Math.floor(Math.random() * wanderSpeeches.length)];
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 2500);
+      state.showSpeech(wanderSpeeches[Math.floor(Math.random() * wanderSpeeches.length)], 2500);
     }
   },
   {
@@ -35,10 +29,7 @@ export const ACTIONS: AgentAction[] = [
     effects: { 'currentAction:idle': true },
     getCost() { return 1; },
     execute() {
-      petState.currentAction = 'idle';
-      petState.mood = 'happy';
-      petState.vx = 0;
-      petState.actionTimer = 0;
+      petState.setAction('idle', 'happy', 0);
     }
   },
   {
@@ -47,11 +38,7 @@ export const ACTIONS: AgentAction[] = [
     effects: { 'petEnergyHigh': true, 'currentAction:sleep': true },
     getCost() { return 5; },
     execute() {
-      petState.currentAction = 'sleep';
-      petState.mood = 'sleeping';
-      petState.vx = 0;
-      petState.vy = 0;
-      petState.actionTimer = 0;
+      petState.setAction('sleep', 'sleeping', 0, 0);
       
       state.speechText = 'Zzz... Khò khò... 😴';
       state.speechVisible = true;
@@ -64,20 +51,14 @@ export const ACTIONS: AgentAction[] = [
     effects: { 'userCheered': true },
     getCost() { return 3; },
     execute() {
-      petState.currentAction = 'idle';
-      petState.mood = 'happy';
-      petState.vx = 0;
-      petState.actionTimer = 0;
+      petState.setAction('idle', 'happy', 0);
       
       const danceSpeeches = [
         'Bug ít quá, nhảy múa thôi! 💃🕺',
         'Có tôi ở đây rồi, đừng lo nhé! 🤗✨',
         'Cố lên bạn ơi, gõ code bốc lửa nào! 🔥🐢'
       ];
-      state.speechText = danceSpeeches[Math.floor(Math.random() * danceSpeeches.length)];
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 4000);
+      state.showSpeech(danceSpeeches[Math.floor(Math.random() * danceSpeeches.length)], 4000);
 
       // Trigger side-by-side fireworks for preview
       for (let offset = -40; offset <= 40; offset += 40) {
@@ -93,15 +74,9 @@ export const ACTIONS: AgentAction[] = [
     effects: { 'userInteracted': true },
     getCost() { return 2; },
     execute() {
-      petState.currentAction = 'wander';
-      petState.mood = 'excited';
-      petState.vx = (Math.random() > 0.5 ? 1.5 : -1.5);
-      petState.actionTimer = 0;
+      petState.setAction('wander', 'excited', (Math.random() > 0.5 ? 1.5 : -1.5));
       
-      state.speechText = 'Chán quá hà! Click chọc tôi đi bạn ơi! 🥺👉🐢';
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 3500);
+      state.showSpeech('Chán quá hà! Click chọc tôi đi bạn ơi! 🥺👉🐢', 3500);
     }
   },
   {
@@ -115,10 +90,7 @@ export const ACTIONS: AgentAction[] = [
       petState.vx = 0;
       petState.vy = 0;
       
-      state.speechText = 'Mở cổng dịch chuyển không gian! 🌀🌌';
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 2000);
+      state.showSpeech('Mở cổng dịch chuyển không gian! 🌀🌌', 2000);
     }
   },
   {
@@ -171,10 +143,7 @@ export const ACTIONS: AgentAction[] = [
       // Determine how far along the wall/ceiling the fall happens (between 25% and 60%)
       (petState as any).climbFallThreshold = 0.25 + Math.random() * 0.35;
       
-      state.speechText = 'Bám biên leo trần nhà thám hiểm thôi! 🧗‍♂️🕸️';
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 3000);
+      state.showSpeech('Bám biên leo trần nhà thám hiểm thôi! 🧗‍♂️🕸️', 3000);
     }
   },
   {
@@ -183,10 +152,7 @@ export const ACTIONS: AgentAction[] = [
     effects: { 'userStretched': true },
     getCost() { return 1; },
     execute() {
-      petState.currentAction = 'idle';
-      petState.mood = 'happy';
-      petState.vx = 0;
-      petState.actionTimer = 0;
+      petState.setAction('stretch_remind', 'happy', 0);
 
       const advices = [
         'Bạn ngồi hơi lâu rồi đó, đứng dậy đi lại vài vòng cho đỡ mỏi nhé! 🚶‍♂️🐢',
@@ -199,7 +165,12 @@ export const ACTIONS: AgentAction[] = [
       state.speechText = advices[Math.floor(Math.random() * advices.length)];
       state.speechVisible = true;
       if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 6000);
+      state.speechTimeout = setTimeout(() => { 
+        state.speechVisible = false; 
+        if (petState.currentAction === 'stretch_remind') {
+          petState.currentAction = 'idle';
+        }
+      }, 8000);
     }
   },
   {
@@ -208,11 +179,7 @@ export const ACTIONS: AgentAction[] = [
     effects: { celebrationFinished: true },
     getCost() { return 1; },
     execute() {
-      petState.currentAction = 'celebrate_fireworks';
-      petState.mood = 'happy';
-      petState.vx = 0;
-      petState.vy = 0;
-      petState.actionTimer = 0;
+      petState.setAction('celebrate_fireworks', 'happy', 0, 0);
 
       const dateObj = new Date();
       const hour = dateObj.getHours();
@@ -244,21 +211,14 @@ export const ACTIONS: AgentAction[] = [
       return Math.max(0.5, 4.0 - (energyNeed + hpBonus) * 3.5);
     },
     execute() {
-      petState.currentAction = 'eat_snack';
-      petState.mood = 'happy';
-      petState.vx = 0;
-      petState.vy = 0;
-      petState.actionTimer = 0;
+      petState.setAction('eat_snack', 'happy', 0, 0);
 
       const snackSpeeches = [
         'Măm măm... Bánh quy chocolate giòn rụm ngon quá! 🍪🐢',
         'Ngoạm... Quả dâu tây chín đỏ mọng ngọt lịm! 🍓🐢',
         'Ăn tí snack giòn rụm nạp năng lượng chiến đấu với bug! 🍿🐢'
       ];
-      state.speechText = snackSpeeches[Math.floor(Math.random() * snackSpeeches.length)];
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 4000);
+      state.showSpeech(snackSpeeches[Math.floor(Math.random() * snackSpeeches.length)], 4000);
     }
   },
   {
@@ -273,21 +233,14 @@ export const ACTIONS: AgentAction[] = [
       return Math.max(0.5, 4.0 - (hpNeed + energyHint) * 3.5);
     },
     execute() {
-      petState.currentAction = 'drink_water';
-      petState.mood = 'happy';
-      petState.vx = 0;
-      petState.vy = 0;
-      petState.actionTimer = 0;
+      petState.setAction('drink_water', 'happy', 0, 0);
 
       const waterSpeeches = [
         'Làm ngụm nước mát tinh khiết thanh lọc cơ thể nào! 💧🐢',
         'Ức ức... Trà sữa boba 50% đường trân châu dai giòn! 🧋🐢',
         'Uống đủ nước mỗi ngày để minh mẫn fix bug nhé bạn ơi! 🥤🐢'
       ];
-      state.speechText = waterSpeeches[Math.floor(Math.random() * waterSpeeches.length)];
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 4000);
+      state.showSpeech(waterSpeeches[Math.floor(Math.random() * waterSpeeches.length)], 4000);
     }
   },
   {
@@ -301,21 +254,14 @@ export const ACTIONS: AgentAction[] = [
       return isHealthy ? 1.0 : 4.5; // rẻ khi khỏe, đắt khi cần phục hồi
     },
     execute() {
-      petState.currentAction = 'put_on_hat';
-      petState.mood = 'happy';
-      petState.vx = 0;
-      petState.vy = 0;
-      petState.actionTimer = 0;
+      petState.setAction('put_on_hat', 'happy', 0, 0);
 
       const hatSpeeches = [
         'Để xem... đội nón gì cho ngầu hôm nay ta? 🎩🐢',
         'Biến hình! Thay đổi phong cách thời trang nào! 👒✨',
         'Nâng cấp diện mạo mới cho Rùa Dev! 🧢🐢'
       ];
-      state.speechText = hatSpeeches[Math.floor(Math.random() * hatSpeeches.length)];
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 3000);
+      state.showSpeech(hatSpeeches[Math.floor(Math.random() * hatSpeeches.length)], 3000);
     }
   },
   {
@@ -330,21 +276,14 @@ export const ACTIONS: AgentAction[] = [
       return Math.max(0.5, 4.0 - (iqNeed + expNeed) * 3.5);
     },
     execute() {
-      petState.currentAction = 'read_book';
-      petState.mood = 'happy';
-      petState.vx = 0;
-      petState.vy = 0;
-      petState.actionTimer = 0;
+      petState.setAction('read_book', 'happy', 0, 0);
 
       const bookSpeeches = [
         'Đang nghiên cứu bí kíp Clean Code tối thượng! 📖👓',
         'Học cấu trúc dữ liệu và giải thuật tối ưu hệ thống! 📚🐢',
         'Đọc sách tăng trình độ code, chuẩn bị lên Senior thôi! 🧠📖'
       ];
-      state.speechText = bookSpeeches[Math.floor(Math.random() * bookSpeeches.length)];
-      state.speechVisible = true;
-      if (state.speechTimeout) clearTimeout(state.speechTimeout);
-      state.speechTimeout = setTimeout(() => { state.speechVisible = false; }, 5000);
+      state.showSpeech(bookSpeeches[Math.floor(Math.random() * bookSpeeches.length)], 5000);
     }
   }
 ];

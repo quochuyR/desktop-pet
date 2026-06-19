@@ -1,5 +1,8 @@
 # Classic Agent AI Architecture (BDI + GOAP + Utility AI + Memory + RL)
 
+> [!NOTE]
+> Tài liệu này mô tả **kiến trúc bộ não AI**. Để xem bản đồ cấu trúc thư mục và các thành phần source code thực tế (Frontend Rendering, Backend Rust), vui lòng tham khảo: 👉 [AI_ARCHITECTURE_GUIDE.md](file:///c:/ProgramLibrary/desktop/desktop-pet/AI_ARCHITECTURE_GUIDE.md)
+
 Tài liệu này ghi lại kiến trúc bộ não tự trị của chú Rùa Dev sau khi nâng cấp lên hệ thống tác tử (Agent) cổ điển, hoạt động hoàn toàn cục bộ (offline) không cần LLM.
 
 ---

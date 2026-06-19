@@ -1,0 +1,15 @@
+# AI Agent Desktop Pet Rules
+
+You are working on the Desktop Pet project. You MUST STRICTLY follow the architecture and rules defined in this project.
+
+1. Read the Architecture Guide to understand the decoupled systems (Renderer vs Physics, Backend Tauri splits):
+   Read this file first: `AI_ARCHITECTURE_GUIDE.md`
+
+2. Read the specific Agent Rules (TDD, Priorities, Branching):
+   Read this file second: `AI_RULES.md`
+
+3. ALWAYS check your code using the strict tests before committing:
+   - Frontend: `npx svelte-check` and `npm run test`
+   - Backend: `cargo check` and `cargo test`
+
+4. DO NOT commit to `main`. Create a `feature/` branch.

@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { petState, state, syncMonitorLayout } from '../state.svelte';
-  import { updateMovement, particleSystem } from '../physics';
-  import { TurtleRenderer } from '../turtle';
+  import { updateMovement } from '../physics';
+  import { particleSystem } from '../particleSystem';
+  import { TurtleRenderer } from '../renderer/TurtleRenderer';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
 
@@ -26,13 +27,13 @@
     });
     
     // Bind particle methods to physics system
-    particleSystem.addStar = (x, y, vx, vy) => renderer.addStar(x, y, vx, vy);
-    particleSystem.addDust = (x, y, vx, vy) => renderer.addDust(x, y, vx, vy);
-    particleSystem.addBubble = (x, y) => renderer.addBubble(x, y);
-    particleSystem.addSweat = (x, y) => renderer.addSweat(x, y);
-    particleSystem.addTear = (x, y) => renderer.addTear(x, y);
-    particleSystem.addFireworks = (x, y) => renderer.addFireworks(x, y);
-    particleSystem.addCrumb = (x, y) => renderer.addCrumb(x, y);
+    particleSystem.addStar = (x, y, vx, vy) => renderer.particleRenderer.addStar(x, y, vx ?? 0, vy ?? 0);
+    particleSystem.addDust = (x, y, vx, vy) => renderer.particleRenderer.addDust(x, y, vx ?? null, vy ?? null);
+    particleSystem.addBubble = (x, y) => renderer.particleRenderer.addBubble(x, y);
+    particleSystem.addSweat = (x, y) => renderer.particleRenderer.addSweat(x, y);
+    particleSystem.addTear = (x, y) => renderer.particleRenderer.addTear(x, y);
+    particleSystem.addFireworks = (x, y) => renderer.particleRenderer.addFireworks(x, y);
+    particleSystem.addCrumb = (x, y) => renderer.particleRenderer.addCrumb(x, y);
 
     let animationFrameId: number;
     let lastTime = performance.now();

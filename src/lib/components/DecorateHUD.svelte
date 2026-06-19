@@ -3,7 +3,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { LogicalSize } from '@tauri-apps/api/dpi';
-  import { TurtleRenderer } from '../turtle';
+  import { TurtleRenderer } from '../renderer/TurtleRenderer';
 
   type TabId = 'hat' | 'glasses' | 'collar' | 'color' | 'pattern' | 'feet' | 'eyes' | 'head' | 'tail';
   let activeTab: TabId = $state('hat');

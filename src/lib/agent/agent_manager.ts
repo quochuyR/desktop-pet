@@ -79,29 +79,7 @@ export class AgentManager {
     // Sync sensors/world model
     this.worldModel.syncWithState();
 
-    // If break overlay or stats dialog is visible, we pause behavior planning
-    if (state.breakVisible || state.statsVisible || petState.currentAction === 'stats_dialog' || petState.currentAction === 'stats_dialog_exit') {
-      return;
-    }
-
-    // If the pet is dangling, falling, flipped, crying on the ground, or tired, we pause behavior planning
-    const isPhysicalState = 
-      petState.currentAction === 'dangling' || 
-      petState.currentAction === 'falling' || 
-      petState.currentAction === 'flipped' || 
-      petState.currentAction === 'crying_ground' || 
-      petState.currentAction === 'tired';
-
-    if (isPhysicalState) {
-      return;
-    }
-
-    // If celebration is active, pause planning to let the fireworks run
-    if (petState.currentAction === 'celebrate_fireworks' && this.worldModel.beliefs.isCelebrationActive) {
-      return;
-    }
-
-    // 1. Direct Clock Scheduler Triggers (100% deterministic, not related to RL or AI planning)
+    // 1. Direct Clock Scheduler Triggers (Highest Priority: 100% deterministic, bypasses other pauses)
     if (this.worldModel.beliefs.userNeedsBreakRemind) {
       console.log('[Agent AI] Clock Scheduler: Triggering ActionHourlyBreak!');
       this.executeDirectAction('ActionHourlyBreak');
@@ -120,6 +98,29 @@ export class AgentManager {
         this.executeDirectAction('ActionCelebrateFireworks');
         return;
       }
+    }
+
+    // If break overlay or stats dialog is visible, we pause behavior planning
+    if (state.breakVisible || state.statsVisible || petState.currentAction === 'stats_dialog' || petState.currentAction === 'stats_dialog_exit') {
+      return;
+    }
+
+    // If the pet is dangling, falling, flipped, crying on the ground, or tired, we pause behavior planning
+    const isPhysicalState = 
+      petState.currentAction === 'dangling' || 
+      petState.currentAction === 'falling' || 
+      petState.currentAction === 'flipped' || 
+      petState.currentAction === 'crying_ground' || 
+      petState.currentAction === 'tired' ||
+      petState.currentAction === 'stretch_remind';
+
+    if (isPhysicalState) {
+      return;
+    }
+
+    // If celebration is active, pause planning to let the fireworks run
+    if (petState.currentAction === 'celebrate_fireworks' && this.worldModel.beliefs.isCelebrationActive) {
+      return;
     }
 
     // 2. Select Goal using Utility AI

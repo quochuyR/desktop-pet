@@ -11,6 +11,8 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
+    "strict": true,
+    "noImplicitAny": true,
     "ignoreDeprecations": "6.0",
     "types": ["node"],
     "paths": {

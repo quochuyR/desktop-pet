@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use desktop_pet_lib::{commands, config, db, dev_monitor, system_monitor, AppState};
+use desktop_pet_lib::{commands, sys, config, db, dev_monitor, system_monitor, AppState};
 use std::sync::{Arc, Mutex};
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
@@ -140,32 +140,32 @@ fn main() {
             // Start win32 event listener for visible window platform updates
             let app_handle_hook = app.handle().clone();
             std::thread::spawn(move || {
-                commands::run_win_event_listener(app_handle_hook);
+                sys::win32::run_win_event_listener(app_handle_hook);
             });
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::get_pet_stats,
-            commands::pet_clicked,
-            commands::get_dev_status,
-            commands::update_watch_path,
-            commands::get_ai_advice,
-            commands::get_ai_advice_auto,
-            commands::move_window,
-            commands::log_js,
-            commands::get_physical_cursor_position,
-            commands::toggle_click_through,
-            commands::get_config_info,
-            commands::db_log_custom_event,
-            commands::db_get_kv,
-            commands::db_set_kv,
-            commands::db_load_personality,
-            commands::db_save_personality,
-            commands::db_get_app_usage,
-            commands::db_get_app_usage_summary,
-            commands::get_current_monitor_layout,
-            commands::get_all_monitors,
+            commands::pet::get_pet_stats,
+            commands::pet::pet_clicked,
+            commands::dev::get_dev_status,
+            commands::dev::update_watch_path,
+            commands::ai::get_ai_advice,
+            commands::ai::get_ai_advice_auto,
+            commands::window::move_window,
+            commands::system::log_js,
+            commands::system::get_physical_cursor_position,
+            commands::window::toggle_click_through,
+            commands::config::get_config_info,
+            commands::db::db_log_custom_event,
+            commands::db::db_get_kv,
+            commands::db::db_set_kv,
+            commands::db::db_load_personality,
+            commands::db::db_save_personality,
+            commands::db::db_get_app_usage,
+            commands::db::db_get_app_usage_summary,
+            commands::window::get_current_monitor_layout,
+            commands::window::get_all_monitors,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

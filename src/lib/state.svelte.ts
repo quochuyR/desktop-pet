@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { PetAction, type PetActionType } from './types';
 
 export const ENABLE_DEBUG_LOGS = false;
 
@@ -52,6 +53,17 @@ export class GlobalState {
   breakTimer = $state(30.0);
   
   monitors = $state<MonitorLayout[]>([]);
+
+  // Reusable helper for speech bubbles
+  showSpeech(text: string, durationMs: number = 3000, onComplete?: () => void) {
+    this.speechText = text;
+    this.speechVisible = true;
+    if (this.speechTimeout) clearTimeout(this.speechTimeout);
+    this.speechTimeout = setTimeout(() => { 
+      this.speechVisible = false; 
+      if (onComplete) onComplete();
+    }, durationMs);
+  }
 }
 
 export const state = new GlobalState();
@@ -75,7 +87,7 @@ export class PetState {
   facingLeft = false;
 
   // AI / Actions
-  currentAction = 'wander';
+  currentAction: PetActionType | string = PetAction.Wander;
   actionTimer = 0;
   onEdge = false;
   isFastClimb = false;
@@ -83,6 +95,15 @@ export class PetState {
   reactionTimer = 0;
   reactionMood: string | null = null;
   isHovered = false;
+
+  // Reusable helper to set action state
+  setAction(action: string, mood: string, vx: number = 0, vy: number = 0) {
+    this.currentAction = action;
+    this.mood = mood;
+    this.vx = vx;
+    this.vy = vy;
+    this.actionTimer = 0;
+  }
 
   // Window Sync
   monitorX = $state(0);

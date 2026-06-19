@@ -5,7 +5,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { agentManager } from './lib/agent/agent_manager';
-  import { particleSystem } from './lib/physics';
+  import { particleSystem } from './lib/particleSystem';
   
   import PetCanvas from './lib/components/PetCanvas.svelte';
   import StatsHUD from './lib/components/StatsHUD.svelte';
