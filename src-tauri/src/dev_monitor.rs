@@ -40,6 +40,33 @@ pub mod win32 {
             lpExeName: LPWSTR,
             lpdwSize: *mut DWORD,
         ) -> BOOL;
+        pub fn GetTickCount() -> DWORD;
+    }
+
+    #[repr(C)]
+    #[allow(non_snake_case)]
+    pub struct LASTINPUTINFO {
+        pub cbSize: u32,
+        pub dwTime: u32,
+    }
+
+    #[link(name = "user32")]
+    extern "system" {
+        pub fn GetLastInputInfo(plii: *mut LASTINPUTINFO) -> BOOL;
+    }
+
+    pub fn get_os_idle_time_ms() -> u32 {
+        unsafe {
+            let mut lii = LASTINPUTINFO {
+                cbSize: std::mem::size_of::<LASTINPUTINFO>() as u32,
+                dwTime: 0,
+            };
+            if GetLastInputInfo(&mut lii) != 0 {
+                GetTickCount().wrapping_sub(lii.dwTime)
+            } else {
+                0
+            }
+        }
     }
 
     const PROCESS_QUERY_LIMITED_INFORMATION: DWORD = 0x1000;
@@ -100,6 +127,10 @@ pub mod win32 {
 mod win32 {
     pub fn get_active_window_info() -> Option<(String, String)> {
         None
+    }
+    
+    pub fn get_os_idle_time_ms() -> u32 {
+        0
     }
 }
 
@@ -292,14 +323,8 @@ pub async fn start_monitoring(app: AppHandle) {
 
         // ── Idle detection every 60s ──────────────────────────────
         if last_idle_check.elapsed() > Duration::from_secs(60) {
-            let is_active = monitor_arc
-                .lock()
-                .map(|m| {
-                    m.last_event_time
-                        .map(|t| t.elapsed() < Duration::from_secs(300))
-                        .unwrap_or(false)
-                })
-                .unwrap_or(false);
+            let os_idle_time = win32::get_os_idle_time_ms();
+            let is_active = os_idle_time < 300_000; // 5 minutes
 
             if is_active {
                 if idle_minutes > 0 {
@@ -312,6 +337,27 @@ pub async fn start_monitoring(app: AppHandle) {
                     };
                     emit_reactions(&app, reactions);
                     idle_minutes = 0;
+                }
+
+                // If user is actively typing/moving mouse AND a dev tool is open
+                let tool = {
+                    if let Ok(pet) = pet_arc.lock() {
+                        pet.active_tool.clone()
+                    } else {
+                        None
+                    }
+                };
+                if tool.is_some() {
+                    let reactions = {
+                        if let Ok(mut pet) = pet_arc.lock() {
+                            // Energy drains faster when actively working (-0.3 per minute)
+                            pet.energy = (pet.energy - 0.3).max(0.0);
+                            vec![]
+                        } else {
+                            vec![]
+                        }
+                    };
+                    emit_reactions(&app, reactions);
                 }
 
                 // Alert after 2h, 4h, 6h... of coding

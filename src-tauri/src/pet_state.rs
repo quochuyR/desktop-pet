@@ -270,8 +270,13 @@ impl PetState {
     }
 
     fn apply_passive_decay(&mut self) {
-        // Energy slowly drains
-        self.energy = (self.energy - 0.01).max(0.0);
+        if self.mood == PetMood::Sleeping {
+            self.energy = (self.energy + 2.0).min(100.0);
+            self.hp = (self.hp + 1.0).min(100.0);
+        } else {
+            // Energy slowly drains
+            self.energy = (self.energy - 0.01).max(0.0);
+        }
     }
 
     fn calculate_level(&self) -> u32 {

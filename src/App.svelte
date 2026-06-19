@@ -468,6 +468,9 @@
         } else {
           openStats();
         }
+      } else if (e.key.toLowerCase() === 'e') {
+        jsLog("[App.svelte] Keydown 'E' detected - Testing Sleep!");
+        petState.energy = 5; // Drain energy to force sleep state
       }
     };
     window.addEventListener('keydown', handleKeydown);

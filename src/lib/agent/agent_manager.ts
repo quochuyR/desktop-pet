@@ -80,6 +80,14 @@ export class AgentManager {
     this.worldModel.syncWithState();
 
     // 1. Direct Clock Scheduler Triggers (Highest Priority: 100% deterministic, bypasses other pauses)
+    if (this.worldModel.beliefs.isCelebrationActive) {
+      if (petState.currentAction !== 'celebrate_fireworks') {
+        console.log('[Agent AI] Clock Scheduler: Triggering ActionCelebrateFireworks!');
+        this.executeDirectAction('ActionCelebrateFireworks');
+        return;
+      }
+    }
+
     if (this.worldModel.beliefs.userNeedsBreakRemind) {
       console.log('[Agent AI] Clock Scheduler: Triggering ActionHourlyBreak!');
       this.executeDirectAction('ActionHourlyBreak');
@@ -90,14 +98,6 @@ export class AgentManager {
       console.log('[Agent AI] Clock Scheduler: Triggering ActionStretchRemind!');
       this.executeDirectAction('ActionStretchRemind');
       return;
-    }
-
-    if (this.worldModel.beliefs.isCelebrationActive) {
-      if (petState.currentAction !== 'celebrate_fireworks') {
-        console.log('[Agent AI] Clock Scheduler: Triggering ActionCelebrateFireworks!');
-        this.executeDirectAction('ActionCelebrateFireworks');
-        return;
-      }
     }
 
     // If break overlay or stats dialog is visible, we pause behavior planning
@@ -153,7 +153,7 @@ export class AgentManager {
         return;
       }
 
-      if (Math.random() < 0.15 && petState.currentAction !== 'wander') {
+      if (Math.random() < 0.4 && petState.currentAction !== 'wander') {
         const wander = ACTIONS.find(a => a.name === 'ActionWander')!;
         wander.execute();
         this.lastActionName = wander.name;

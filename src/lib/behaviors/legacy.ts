@@ -962,6 +962,11 @@ export function executeLegacyBehaviors(bounds: any, currentGroundY: number, targ
   else if (petState.currentAction === 'sleep') {
     petState.mood = 'sleeping';
     petState.vx = 0;
+    petState.actionTimer++;
+    if (petState.actionTimer % 30 === 0) {
+      petState.energy = Math.min(100, petState.energy + 2);
+      petState.hp = Math.min(100, petState.hp + 1);
+    }
     return;
   }
   else if (petState.currentAction === 'tired') {
