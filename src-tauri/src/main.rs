@@ -90,8 +90,14 @@ fn main() {
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => {
                         if let Some(state) = app.try_state::<AppState>() {
-                            if let (Ok(pet), Ok(db)) = (state.pet.lock(), state.db.lock()) {
+                            if let (Ok(pet), Ok(db), Ok(mut monitor)) = (state.pet.lock(), state.db.lock(), state.monitor.lock()) {
                                 let _ = db.save_pet(&pet);
+                                if let Some((prev_proc, prev_title, active_app_since, active_app_start_time)) = monitor.current_app_usage.take() {
+                                    let duration = active_app_since.elapsed().as_secs();
+                                    if duration > 0 {
+                                        let _ = db.log_app_usage(&prev_proc, &prev_title, &active_app_start_time, duration);
+                                    }
+                                }
                             }
                         }
                         std::process::exit(0);

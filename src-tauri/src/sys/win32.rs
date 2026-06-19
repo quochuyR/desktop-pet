@@ -221,11 +221,6 @@ pub fn run_win_event_listener(app_handle: tauri::AppHandle) {
                     trigger_platform_update();
                 });
 
-                let mut last_active_app: Option<(String, String)> = None;
-                let mut active_app_since = Instant::now();
-                let mut active_app_start_time =
-                    chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-
                 loop {
                     if rx.recv().is_ok() {
                         while rx.try_recv().is_ok() {}
@@ -235,23 +230,32 @@ pub fn run_win_event_listener(app_handle: tauri::AppHandle) {
                         if elapsed < Duration::from_millis(33) {
                             std::thread::sleep(Duration::from_millis(33) - elapsed);
                         }
+                        
+                        let is_sleep_gap = elapsed > Duration::from_secs(12);
 
                         update_platforms(&app_handle_clone);
 
                         if let Some((curr_proc, curr_title)) =
                             crate::dev_monitor::win32::get_active_window_info()
                         {
-                            let changed = match &last_active_app {
-                                Some((prev_proc, prev_title)) => {
-                                    prev_proc != &curr_proc || prev_title != &curr_title
-                                }
-                                None => true,
-                            };
+                            if let Some(state) = app_handle_clone.try_state::<AppState>() {
+                                let mut monitor = state.monitor.lock().unwrap();
+                                
+                                let changed = match &monitor.current_app_usage {
+                                    Some((prev_proc, prev_title, _, _)) => {
+                                        prev_proc != &curr_proc || prev_title != &curr_title
+                                    }
+                                    None => true,
+                                };
 
-                            if changed {
-                                if let Some(state) = app_handle_clone.try_state::<AppState>() {
-                                    if let Some((prev_proc, prev_title)) = last_active_app.take() {
-                                        let duration = active_app_since.elapsed().as_secs();
+                                if changed {
+                                    if let Some((prev_proc, prev_title, active_app_since, active_app_start_time)) = monitor.current_app_usage.take() {
+                                        let duration = if is_sleep_gap {
+                                            0 // Ignore duration if system was sleeping
+                                        } else {
+                                            active_app_since.elapsed().as_secs()
+                                        };
+                                        
                                         if duration > 0 {
                                             if let Ok(db) = state.db.lock() {
                                                 let _ = db.log_app_usage(
@@ -293,18 +297,27 @@ pub fn run_win_event_listener(app_handle: tauri::AppHandle) {
                                         };
                                         let _ = app_handle_clone.emit("pet_message", msg);
                                     }
-                                }
 
-                                last_active_app = Some((curr_proc, curr_title));
-                                active_app_since = Instant::now();
-                                active_app_start_time =
-                                    chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+                                    monitor.current_app_usage = Some((
+                                        curr_proc,
+                                        curr_title,
+                                        Instant::now(),
+                                        chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                                    ));
+                                } else if is_sleep_gap {
+                                    // System slept but app didn't change. Reset the timer to ignore the sleep time.
+                                    if let Some(usage) = monitor.current_app_usage.as_mut() {
+                                        usage.2 = Instant::now(); 
+                                    }
+                                }
                             }
                         } else {
-                            if let Some((prev_proc, prev_title)) = last_active_app.take() {
-                                let duration = active_app_since.elapsed().as_secs();
-                                if duration > 0 {
-                                    if let Some(state) = app_handle_clone.try_state::<AppState>() {
+                            // No active window (e.g. locking screen)
+                            if let Some(state) = app_handle_clone.try_state::<AppState>() {
+                                let mut monitor = state.monitor.lock().unwrap();
+                                if let Some((prev_proc, prev_title, active_app_since, active_app_start_time)) = monitor.current_app_usage.take() {
+                                    let duration = if is_sleep_gap { 0 } else { active_app_since.elapsed().as_secs() };
+                                    if duration > 0 {
                                         if let Ok(db) = state.db.lock() {
                                             let _ = db.log_app_usage(
                                                 &prev_proc,

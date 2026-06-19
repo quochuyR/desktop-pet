@@ -120,6 +120,7 @@ const DEV_PROCESSES: &[(&str, &str)] = &[
 pub struct DevMonitor {
     pub active_processes: HashSet<String>,
     pub last_event_time: Option<Instant>,
+    pub current_app_usage: Option<(String, String, Instant, String)>, // (process, title, since, start_time_str)
 }
 
 impl DevMonitor {
@@ -127,6 +128,7 @@ impl DevMonitor {
         DevMonitor {
             active_processes: HashSet::new(),
             last_event_time: Some(Instant::now()),
+            current_app_usage: None,
         }
     }
 

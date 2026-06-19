@@ -320,26 +320,54 @@ impl Database {
     }
 
     pub fn get_app_usage_summary(&self, days: u32) -> Result<Vec<AppUsageSummary>> {
-        let time_modifier = format!("-{} days", days);
-        let mut stmt = self.conn.prepare(
-            "SELECT process_name, SUM(duration_seconds) as total_duration, COUNT(*) as sessions 
-             FROM app_usage_log 
-             WHERE created_at >= datetime('now', 'localtime', ?1)
-             GROUP BY process_name 
-             ORDER BY total_duration DESC",
-        )?;
-        let rows = stmt.query_map(params![time_modifier], |row| {
-            Ok(AppUsageSummary {
-                process_name: row.get(0)?,
-                total_duration_seconds: row.get(1)?,
-                session_count: row.get(2)?,
-            })
-        })?;
+        let (query, param) = if days == 1 {
+            (
+                "SELECT process_name, SUM(duration_seconds) as total_duration, COUNT(*) as sessions 
+                 FROM app_usage_log 
+                 WHERE created_at >= datetime('now', 'localtime', 'start of day')
+                 GROUP BY process_name 
+                 ORDER BY total_duration DESC",
+                String::new()
+            )
+        } else {
+            (
+                "SELECT process_name, SUM(duration_seconds) as total_duration, COUNT(*) as sessions 
+                 FROM app_usage_log 
+                 WHERE created_at >= datetime('now', 'localtime', ?1)
+                 GROUP BY process_name 
+                 ORDER BY total_duration DESC",
+                format!("-{} days", days)
+            )
+        };
 
+        let mut stmt = self.conn.prepare(query)?;
+        
         let mut entries = Vec::new();
-        for r in rows {
-            entries.push(r?);
+        
+        if days == 1 {
+            let rows = stmt.query_map([], |row| {
+                Ok(AppUsageSummary {
+                    process_name: row.get(0)?,
+                    total_duration_seconds: row.get(1)?,
+                    session_count: row.get(2)?,
+                })
+            })?;
+            for r in rows {
+                entries.push(r?);
+            }
+        } else {
+            let rows = stmt.query_map(params![param], |row| {
+                Ok(AppUsageSummary {
+                    process_name: row.get(0)?,
+                    total_duration_seconds: row.get(1)?,
+                    session_count: row.get(2)?,
+                })
+            })?;
+            for r in rows {
+                entries.push(r?);
+            }
         }
+
         Ok(entries)
     }
 }
